@@ -1,0 +1,69 @@
+<div class="contents" >
+  
+  <%= form_for @todo,url: url_for(action: :index), html: { class: 'form js-form' },method: 'get', remote: true do |f|%>
+    <%= f.text_field :content, class: 'form_text-field js-form_text-field' %>
+    <%= f.submit class: 'form_submit js-submit' %>
+  <% end %>
+  
+  <ul class="todos" >
+    <!--部分テンプレートでtodoが個別のインスタンスとして呼ばれる変数になるし、each文を使用しなくても繰り返しを行ってくれる-->
+    <%= render @todos %>
+  </ul>
+  
+</div>
+
+<script>
+  
+  $(function(){
+     function buildHTML(todo) {
+      //以下はセレクタの中身を新規に作るという意味
+      var html = $('<li class="todo">').append(todo.content);
+      // この関数の返り値を新たに作成したセレクタとする=>新たに値を入れるための雛形を作成しただけ
+      return html;
+    }
+    
+    // 送信ボタンをクリックしたら以下プログラムが動く
+    $('.js-form').on('submit', function(e) {
+      // フォームを送信したときにリンク先への遷移を抑える 遷移＝通信
+      e.preventDefault();
+      // 入力されているテキストのセレクタを格納する
+      var textField = $('.js-form_text-field');
+      // テキストに入力した値を変数に入れる
+      var todo = textField.val();
+      // alert(todo)
+      
+      // ここからAjaxの非同期通信に入る
+      // URLは通信したい＝データを渡したい相手を書く今回の場合は「todo.json」にフォームのデータを渡す
+      // typeはデータを渡す＝投稿するのでPOSTとする
+      // dataはjson形式なのでtodoキーに対応するvalueはcontentフィールドの値（todo）とする jsonの書き方は別サイトで
+      // datatypeはどの形式でデータを渡すか json? xml? txt?
+      // successは通信が成功した時に行う処理console.logで処理したデータを表示
+      // 
+      $.ajax({
+        url: '/todos.json',
+        type: "POST",
+        data: { 
+            todo:{
+              content: todo }
+              },
+        dataType: 'json',
+        success: function(data){
+          alert("OK");
+          console.log(data);
+          // data（上のdata:{}）を引数としてbuildHTMLという関数を実行し、上のセレクタに今回のデータを入れて新しく作成しリターン
+          var html = buildHTML(data);
+          // 上のviewのgodosクラスに追加する
+          $('.todos').append(html);
+          // 今回作成する際にtextFielsを初期化しておく
+          textField.val('')
+        },
+        
+        // 通信に失敗したときの処理
+        error: function(data){
+          alert("NO")
+          // console.log(data.responseText);
+        }
+      });
+    });
+  });
+</script>
